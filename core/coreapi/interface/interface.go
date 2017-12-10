@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"time"
 
 	ipld "gx/ipfs/QmNwUEK7QbwSqyKBu3mMtToo8SUc6wQJ7gdZq4gGGJqfnf/go-ipld-format"
 	cid "gx/ipfs/QmeSrf6pzut73u6zLQkRFQ3ygt3k6XFT2kjdYP8Tnkwwyg/go-cid"
@@ -25,6 +26,11 @@ type Path interface {
 type Node ipld.Node
 type Link ipld.Link
 
+type IpnsEntry struct {
+	Name  string
+	Value Path
+}
+
 type Reader interface {
 	io.ReadSeeker
 	io.Closer
@@ -34,6 +40,7 @@ type Reader interface {
 type CoreAPI interface {
 	// Unixfs returns an implementation of Unixfs API
 	Unixfs() UnixfsAPI
+	Name() NameAPI
 
 	// ResolvePath resolves the path using Unixfs resolver
 	ResolvePath(context.Context, Path) (Path, error)
@@ -53,6 +60,18 @@ type UnixfsAPI interface {
 
 	// Ls returns the list of links in a directory
 	Ls(context.Context, Path) ([]*Link, error)
+}
+
+type NameAPI interface {
+	Publish(ctx context.Context, path Path, validTime time.Duration, key string) (*IpnsEntry, error)
+	Resolve(ctx context.Context, name string, recursive bool, local bool, nocache bool) (Path, error)
+}
+
+type KeyApi interface {
+	Generate(ctx context.Context, name string, algorithm string, size int) error
+	List(ctx context.Context) (map[string]string, error) //TODO: better key type?
+	Rename(ctx context.Context, oldName string, newName string) error
+	Remove(ctx context.Context, name string) error
 }
 
 // type ObjectAPI interface {
