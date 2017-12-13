@@ -8,6 +8,8 @@ import (
 	"io"
 	"time"
 
+	options "github.com/ipfs/go-ipfs/core/coreapi/interface/options"
+
 	ipld "gx/ipfs/QmNwUEK7QbwSqyKBu3mMtToo8SUc6wQJ7gdZq4gGGJqfnf/go-ipld-format"
 	cid "gx/ipfs/QmeSrf6pzut73u6zLQkRFQ3ygt3k6XFT2kjdYP8Tnkwwyg/go-cid"
 )
@@ -64,14 +66,25 @@ type UnixfsAPI interface {
 }
 
 type NameAPI interface {
-	Publish(ctx context.Context, path Path, validTime time.Duration, key string) (*IpnsEntry, error)
-	Resolve(ctx context.Context, name string, recursive bool, local bool, nocache bool) (Path, error)
+	Publish(ctx context.Context, path Path, opts ...options.NamePublishOption) (*IpnsEntry, error)
+	WithValidTime(validTime time.Duration) options.NamePublishOption
+	WithKey(key string) options.NamePublishOption
+
+	Resolve(ctx context.Context, name string, opts ...options.NameResolveOption) (Path, error)
+	WithRecursive(recursive bool) options.NameResolveOption
+	WithLocal(local bool) options.NameResolveOption
+	WithNoCache(nocache bool) options.NameResolveOption
 }
 
 type KeyAPI interface {
-	Generate(ctx context.Context, name string, algorithm string, size int) (string, error)
+	Generate(ctx context.Context, name string, opts ...options.KeyGenerateOption) (string, error)
+	WithAlgorithm(algorithm string) options.KeyGenerateOption
+	WithSize(size int) options.KeyGenerateOption
+
+	Rename(ctx context.Context, oldName string, newName string, opts ...options.KeyRenameOption) (string, bool, error)
+	WithForce(force bool) options.KeyRenameOption
+
 	List(ctx context.Context) (map[string]string, error) //TODO: better key type?
-	Rename(ctx context.Context, oldName string, newName string, force bool) (string, bool, error)
 	Remove(ctx context.Context, name string) (string, error)
 }
 
